@@ -1,6 +1,7 @@
+using DotaBot;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using static Program;
+using static DotaBot.Parse;
 
 namespace UnitTests
 {
