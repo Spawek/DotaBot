@@ -23,10 +23,13 @@ jobs:
     - name: Clean
       run: dotnet clean --configuration Release && dotnet nuget locals all --clear
 
-    - name: Build with dotnet
+    - name: Build
       run: dotnet build --configuration Release
 
-    - name: dotnet publish
+    - name: Test
+      run: dotnet test --configuration Release
+
+    - name: Publish
       run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
     - name: Deploy to Azure Web App
