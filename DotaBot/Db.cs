@@ -77,18 +77,6 @@ namespace DotaBot
 
         public string[] Players { get; set; }
 
-        public override bool Equals(object obj)
-        {
-            var other = obj as DotaBotGame;
-            if (other == null)
-                return false;
-
-            return Id == other.Id 
-                && Time == other.Time 
-                && GuildId == other.GuildId 
-                && Players.SequenceEqual(other.Players);
-        }
-
         public override string ToString()
         {
             return $"{Id}: {Time}: {GuildId}: {ChannelId}: ({String.Join(", ", Players)})";

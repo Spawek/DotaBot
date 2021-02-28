@@ -26,13 +26,11 @@ namespace UnitTests
 
             var games = db.DotaBotGames.ToList();
             Assert.AreEqual(games.Count, 1);
-            Assert.AreEqual(games.First(), new DotaBotGame {
-                Id = 1,
-                Time = new DateTime(2020, 1, 1, 21, 0, 0),
-                GuildId = guild_id,
-                ChannelId = channel_id,
-                Players = new string[] { "muhah", "bixkog" } }
-            );
+            var game = games.First();
+            Assert.AreEqual(game.Time, new DateTime(2020, 1, 1, 21, 0, 0));
+            Assert.AreEqual(game.GuildId, guild_id);
+            Assert.AreEqual(game.ChannelId, channel_id);
+            CollectionAssert.AreEqual(game.Players, new string[] { "muhah", "bixkog" });
 
             channel.Execute(Parse("dota 21--", time), "bixkog");
             channel.Execute(Parse("--", time), "muhah");
@@ -75,14 +73,9 @@ namespace UnitTests
 
             var games = db.DotaBotGames.ToList();
             Assert.AreEqual(games.Count, 1);
-            Assert.AreEqual(games.First(), new DotaBotGame
-            {
-                Id = 3,
-                Time = new DateTime(2020, 1, 1, 22, 0, 0),
-                GuildId = guild_id,
-                ChannelId = channel_id,
-                Players = new string[] { "spawek" }
-            });
+            var game = games.First();
+            Assert.AreEqual(game.Time, new DateTime(2020, 1, 1, 22, 0, 0));
+            CollectionAssert.AreEqual(game.Players, new string[] { "spawek" });
         }
     }
 }
