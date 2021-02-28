@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using static DotaBot.Logger;
@@ -118,6 +119,15 @@ namespace DotaBot
 				time = time.AddDays(1);
 
 			return time;
+		}
+
+		static string BuildRegex(params string?[] parts)
+        {
+			var elements = new List<string>();
+			elements.Add("^");
+			elements.AddRange(parts);
+			elements.Add("$");
+			return String.Join(@"\s*", elements);
 		}
 
 		static Command ParseAddRemove(string str, DateTime now)

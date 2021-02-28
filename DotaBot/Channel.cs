@@ -35,10 +35,20 @@ namespace DotaBot
 			.Where(x => x.GuildId == guild_id)
 			.Where(x => x.ChannelId == channel_id);
 
+		// Split to `Execute` and `ExecuteInner` is required as `ExecuteInner` calls `ExecuteInner`
+		// and transaction can't be created inside another transaction.
 		public void Execute(Command command, string player)
-		{
+        {
 			using var transaction = db.Database.BeginTransaction();
 
+			ExecuteInner(command, player);
+
+			db.SaveChanges();
+			transaction.Commit();
+		}
+
+		private void ExecuteInner(Command command, string player)
+		{
 			if (command.action == Command.Action.Add)
 			{
 				var matched = Games.Where(x => x.Time == command.time).FirstOrDefault();
@@ -98,11 +108,11 @@ namespace DotaBot
 				}
 				else
 				{
-					Execute(new Command
-					{
-						action = Command.Action.Add,
-						time = Games.OrderBy(x => x.Id).ToList().Last().Time  // TODO: if ids are not created monotonically: add game creation time to DB
-					},
+					ExecuteInner(new Command
+						{
+							action = Command.Action.Add,
+							time = Games.OrderBy(x => x.Id).ToList().Last().Time  // TODO: if ids are not created monotonically: add game creation time to DB
+						},
 						player);
 				}
 			}
@@ -110,7 +120,7 @@ namespace DotaBot
 			{
 				foreach (var game in db.DotaBotGames.ToList())
 				{
-					Execute(new Command { action = Command.Action.Remove, time = game.Time }, player);
+					ExecuteInner(new Command { action = Command.Action.Remove, time = game.Time }, player);
 				}
 			}
 			else if (command.action == Command.Action.ShowGames)
@@ -133,9 +143,6 @@ namespace DotaBot
 			{
 				Log($"Unhandled action: {command.action}");
 			}
-
-			db.SaveChanges();
-			transaction.Commit();
 		}
 
 		public void CleanOldGames(DateTime now)
