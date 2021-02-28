@@ -30,6 +30,8 @@ namespace UnitTests
                 new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 6, 15, 0) });
             Assert.AreEqual(Parse("dotka 00.00 +1", now),
                 new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 13, 0, 0, 0) });
+            Assert.AreEqual(Parse("gramy 8:30?", now),
+                new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0) });
 
             Assert.AreEqual(Parse("dota 15--", now),
                 new Command { action = Command.Action.Remove, time = new DateTime(2020, 5, 12, 15, 0, 0) });

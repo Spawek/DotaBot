@@ -56,7 +56,7 @@ namespace DotaBot
 			if (Regex.IsMatch(str, @"^\s*--\s*$") || Regex.IsMatch(str, @"^\s*\-1\s*$"))
 				return new Command { action = Command.Action.RemoveAll };
 			// "dota?"
-			if (Regex.IsMatch(str, @"^\s*(?:dota|dotka|doto)\s*\?\s*$", RegexOptions.IgnoreCase))
+			if (Regex.IsMatch(str, $@"{CommandPrefixRegex}\s*\?\s*$", RegexOptions.IgnoreCase))
 				return new Command { action = Command.Action.ShowGames };
 
 			// e.g. "dota 13:24 ++", "dota 12?", "dota 15--", "doto :30?"
@@ -72,7 +72,9 @@ namespace DotaBot
 			return null;
 		}
 
-		const string CommandPrefixRegex = @"^\s*(?:dota|dotka|doto)";
+
+
+		const string CommandPrefixRegex = @"^\s*(?:dota|dotka|doto|gramy)";
 		static string TimeRegex(string hours_group_name, string minutes_group_name){
 			return $@"(?<{hours_group_name}>[0-9]?[0-9])?(?<{minutes_group_name}>(?:\.|:)[0-9][0-9])?";
 		}
@@ -117,6 +119,11 @@ namespace DotaBot
 
 			return time;
 		}
+
+		static string BuildRegex(params string?[] parts)
+        {
+
+        }
 
 		static Command ParseAddRemove(string str, DateTime now)
 		{
