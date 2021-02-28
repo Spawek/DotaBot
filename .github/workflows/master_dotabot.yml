@@ -30,7 +30,7 @@ jobs:
       run: dotnet test --configuration Release
 
     - name: Publish
-      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp/app_data/Jobs/Continuous/DotaBot
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
@@ -38,4 +38,4 @@ jobs:
         app-name: 'dotabot'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_0c86b8db22934606873dd56823295efc }}
-        package: ${{env.DOTNET_ROOT}}/myapp 
+        package: ${{env.DOTNET_ROOT}}/myapp/app_data/Jobs/Continuous/DotaBot

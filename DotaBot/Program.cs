@@ -26,7 +26,7 @@ public class Program
 		{
 			try
 			{
-				Log("Starting Bot");
+				Log("Starting Bot v10");
 				Log($"Acting as `{Host}`");
 				string discordToken = Configuration.GetConfig("DiscordToken");
 				if (discordToken == "")
