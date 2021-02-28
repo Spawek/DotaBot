@@ -120,11 +120,6 @@ namespace DotaBot
 			return time;
 		}
 
-		static string BuildRegex(params string?[] parts)
-        {
-
-        }
-
 		static Command ParseAddRemove(string str, DateTime now)
 		{
 			string add_remove_regex = @"(?<action>\+\+|--|\?||\+1|-1)";
