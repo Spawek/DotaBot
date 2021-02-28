@@ -67,7 +67,6 @@ namespace UnitTests
             channel.Execute(Parse("dota 21?", time), "muhah");
             channel.Execute(Parse("dota 23?", time), "muhah");
             channel.Execute(Parse("dota 22?", time), "muhah");
-            var gamesx = db.DotaBotGames.ToList();
             channel.Execute(Parse("++", time), "spawek");
             channel.Execute(Parse("--", time), "muhah");
 
