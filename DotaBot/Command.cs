@@ -44,10 +44,10 @@ namespace DotaBot
 		}
 	}
 
-	public static class Parse
+	public static class ParseCommand
 	{
 		// Check tests when modyfying it.
-		public static Command ParseCommand(string str, DateTime now)
+		public static Command Parse(string str, DateTime now)
 		{
 			// "++" or "+1"
 			if (Regex.IsMatch(str, @"^\s*\+\+\s*$") || Regex.IsMatch(str, @"^\s*\+1\s*$"))
@@ -60,14 +60,14 @@ namespace DotaBot
 				return new Command { action = Command.Action.ShowGames };
 
 			// e.g. "dota 13:24 ++", "dota 12?", "dota 15--", "doto :30?"
-			var add_remove = ParseAddRemoveCommands(str, now);
+			var add_remove = ParseAddRemove(str, now);
 			if (add_remove != null)
 				return add_remove;
 
 			return null;
 		}
 
-		static Command ParseAddRemoveCommands(string str, DateTime now)
+		static Command ParseAddRemove(string str, DateTime now)
 		{
 			var regex = @"^\s*(?:dota|dotka|doto)\s*(?<hours>[0-9]?[0-9])?(?<minutes>(?:\.|:)[0-9]{2})?\s*(?<action>\+\+|--|\?||\+1|-1)\s*$";
 			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);

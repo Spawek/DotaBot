@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Linq;
 
 namespace DotaBot
 {
@@ -15,13 +16,17 @@ namespace DotaBot
     // Update-Database
     public class Db : DbContext
     {
-        public Db() : base() { }
+        public Db(string connnection_string) : base()
+        {
+            this.connection_string = connnection_string;
+        }
+
+        public Db() : this(Configuration.GetConnectionString("DBModel")) {
+            connection_string = Configuration.GetConnectionString("DBModel");
+        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // NOTE: this doesn't work in the "package manager console" for some reason
-            var connection_string = Configuration.GetConnectionString("DBModel");
-
             if (connection_string == "IN_MEMORY")
             {
                 // https://docs.microsoft.com/en-us/ef/core/testing/ : Approach 3
@@ -54,6 +59,8 @@ namespace DotaBot
         }
 
         public virtual DbSet<DotaBotGame> DotaBotGames { get; set; }
+
+        private string connection_string;
     }
 
     public class DotaBotGame
@@ -69,5 +76,22 @@ namespace DotaBot
         public ulong ChannelId { get; set; }
 
         public string[] Players { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as DotaBotGame;
+            if (other == null)
+                return false;
+
+            return Id == other.Id 
+                && Time == other.Time 
+                && GuildId == other.GuildId 
+                && Players.SequenceEqual(other.Players);
+        }
+
+        public override string ToString()
+        {
+            return $"{Id}: {Time}: {GuildId}: {ChannelId}: ({String.Join(", ", Players)})";
+        }
     }
 }

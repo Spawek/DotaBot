@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using System.Collections;
 using static DotaBot.Logger;
-using static DotaBot.Parse;
+using static DotaBot.ParseCommand;
 
 public class Program
 {
@@ -81,21 +81,19 @@ public class Program
     {
 		try
 		{
-			SocketTextChannel channel = msg.Channel as SocketTextChannel;
-			SocketGuild guild = channel.Guild;
-			if (!IsItMyToHandle(guild.Id, channel.Id))
+			SocketTextChannel discord_channel = msg.Channel as SocketTextChannel;
+			ulong guild = discord_channel.Guild.Id;
+			if (!IsItMyToHandle(guild, discord_channel.Id))
 				return Task.CompletedTask;
 
-			var cetTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
-				TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
-
-			CleanOldGames(cetTime);
 			string author = msg.Author.Username;
 			if (author == "DotaBot")
 				return Task.CompletedTask;
 
+			var cetTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+				TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
 			string content = msg.Content;
-			Command command = ParseCommand(content, cetTime);
+			Command command = Parse(content, cetTime);
 			if (command == null)
 				return Task.CompletedTask;
 
@@ -103,8 +101,9 @@ public class Program
 
 			using (var db = new Db())
             {
-				var channel_state = new ChannelState(discord, db, guild.Id, channel.Id);
-				channel_state.ExecuteCommand(command, author);
+				var channel = new Channel(discord, db, guild, discord_channel.Id);
+				channel.CleanOldGames(cetTime);
+				channel.Execute(command, author);
 			}
 
 		}
@@ -114,23 +113,6 @@ public class Program
         }
 
 		return Task.CompletedTask;
-	}
-
-	private void CleanOldGames(DateTime now)
-	{
-		using var db = new Db();
-		using var transaction = db.Database.BeginTransaction();
-
-		foreach (var game in db.DotaBotGames.ToList())
-		{
-			if (game.Time < now - TimeSpan.FromMinutes(5))
-			{
-				db.DotaBotGames.Remove(game);
-			}
-		}
-
-		db.SaveChanges();
-		transaction.Commit();
 	}
 
 	private Task LogHandler(LogMessage msg)

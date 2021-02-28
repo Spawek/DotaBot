@@ -7,9 +7,9 @@ using static DotaBot.Logger;
 
 namespace DotaBot
 {
-    class ChannelState
+    public class Channel
     {
-        public ChannelState(DiscordSocketClient discord, Db db, ulong guild_id, ulong channel_id)
+        public Channel(DiscordSocketClient discord, Db db, ulong guild_id, ulong channel_id)
         {
             this.discord = discord;
             this.db = db;
@@ -18,7 +18,7 @@ namespace DotaBot
         }
 
         // Test only - sets discord to null, which causes ChannelState to not send messages.
-        public ChannelState(Db db, ulong guild_id, ulong channel_id) : this(null, db, guild_id, channel_id){}
+        public Channel(Db db, ulong guild_id, ulong channel_id) : this(null, db, guild_id, channel_id){}
 
         private void SendMessage(string msg)
         {
@@ -35,9 +35,8 @@ namespace DotaBot
 			.Where(x => x.GuildId == guild_id)
 			.Where(x => x.ChannelId == channel_id);
 
-		public void ExecuteCommand(Command command, string player)
+		public void Execute(Command command, string player)
 		{
-			using var db = new Db();
 			using var transaction = db.Database.BeginTransaction();
 
 			if (command.action == Command.Action.Add)
@@ -99,12 +98,10 @@ namespace DotaBot
 				}
 				else
 				{
-					ExecuteCommand(new Command
+					Execute(new Command
 					{
 						action = Command.Action.Add,
-						time = db.DotaBotGames.AsQueryable().Where(x =>
-							x.GuildId == guild_id &&
-							x.ChannelId == channel_id).OrderBy(x => x.Time).ToList().First().Time
+						time = Games.OrderBy(x => x.Id).ToList().Last().Time  // TODO: if ids are not created monotonically: add game creation time to DB
 					},
 						player);
 				}
@@ -113,20 +110,19 @@ namespace DotaBot
 			{
 				foreach (var game in db.DotaBotGames.ToList())
 				{
-					ExecuteCommand(new Command { action = Command.Action.Remove, time = game.Time }, player);
+					Execute(new Command { action = Command.Action.Remove, time = game.Time }, player);
 				}
 			}
 			else if (command.action == Command.Action.ShowGames)
 			{
-				var games = Games;
-				if (games.Count() == 0)
+				if (Games.Count() == 0)
 				{
 					SendMessage("Nie ma żadnych zaplanowanych gier. Zaproponuj swoją!");
 				}
 				else
 				{
 					var s = "Szykuje się granie:";
-					foreach (var game in games)
+					foreach (var game in Games)
 					{
 						s += $"{PrintGame(game)}\n";
 					}
@@ -136,6 +132,22 @@ namespace DotaBot
 			else
 			{
 				Log($"Unhandled action: {command.action}");
+			}
+
+			db.SaveChanges();
+			transaction.Commit();
+		}
+
+		public void CleanOldGames(DateTime now)
+		{
+			using var transaction = db.Database.BeginTransaction();
+
+			foreach (var game in db.DotaBotGames.ToList())
+			{
+				if (game.Time < now - TimeSpan.FromMinutes(5))
+				{
+					db.DotaBotGames.Remove(game);
+				}
 			}
 
 			db.SaveChanges();
