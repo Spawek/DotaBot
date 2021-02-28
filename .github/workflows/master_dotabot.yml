@@ -38,4 +38,4 @@ jobs:
         app-name: 'dotabot'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_0c86b8db22934606873dd56823295efc }}
-        package: ${{env.DOTNET_ROOT}}/myapp/app_data/Jobs/Continuous/DotaBot
+        package: ${{env.DOTNET_ROOT}}/myapp
