@@ -8,10 +8,10 @@ namespace DotaBot
 {
 	public class Command
 	{
-		public enum Action { Add, Remove, JoinLatestGame, RemoveAll, ShowGames, MoveTimeProposal };
+		public enum Action { Add, Remove, JoinLatestGame, RemoveAll, ShowGames, RescheduleProposal };
 
-		public DateTime time;  // used by: Add, Remove, MoveTimeProposal
-		public DateTime time2;  // used by: MoveTimeProposal 
+		public DateTime time;  // used by: Add, Remove, RescheduleProposal
+		public DateTime time2;  // used by: RescheduleProposal 
 		public Action action;
 
 		// TODO: find a better way to print the state
@@ -64,18 +64,22 @@ namespace DotaBot
 			if (add_remove != null)
 				return add_remove;
 
+			// e.g. "dota 16 -> 17:40?"
+			var reschedule = ParseReschedule(str, now);
+			if (reschedule != null)
+				return reschedule;
+
 			return null;
 		}
 
-		static Command ParseAddRemove(string str, DateTime now)
-		{
-			var regex = @"^\s*(?:dota|dotka|doto)\s*(?<hours>[0-9]?[0-9])?(?<minutes>(?:\.|:)[0-9]{2})?\s*(?<action>\+\+|--|\?||\+1|-1)\s*$";
-			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);
-			if (!match.Success)
-				return null;
+		const string CommandPrefixRegex = @"^\s*(?:dota|dotka|doto)";
+		static string TimeRegex(string hours_group_name, string minutes_group_name){
+			return $@"(?<{hours_group_name}>[0-9]?[0-9])?(?<{minutes_group_name}>(?:\.|:)[0-9][0-9])?";
+		}
 
+		static DateTime? ParseTime(string hours_string, string minutes_string, DateTime now)
+        {
 			int minute;
-			string minutes_string = match.Groups["minutes"].Value;
 			if (minutes_string == "")
 			{
 				minute = 0;
@@ -84,13 +88,15 @@ namespace DotaBot
 			{
 				return null;
 			}
+
 			if (minute > 59)
 				return null;
 
+
 			int hour;
-			if (!Int32.TryParse(match.Groups["hours"].Value, out hour))
+			if (!Int32.TryParse(hours_string, out hour))
 			{
-				if (match.Groups["hours"].Value == "" && minutes_string != "")
+				if (hours_string == "" && minutes_string != "")
 				{
 					hour = now.Hour;
 					if (minute < now.Minute)
@@ -105,6 +111,25 @@ namespace DotaBot
 			if (hour > 23)
 				return null;
 
+			var time = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0);
+			if (time < now)
+				time = time.AddDays(1);
+
+			return time;
+		}
+
+		static Command ParseAddRemove(string str, DateTime now)
+		{
+			string add_remove_regex = @"(?<action>\+\+|--|\?||\+1|-1)";
+			var regex = String.Join(@"\s*", new string[] {
+				CommandPrefixRegex, TimeRegex("hours", "minutes"), add_remove_regex , "$"});
+			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);
+			if (!match.Success)
+				return null;
+
+			var time = ParseTime(match.Groups["hours"].Value, match.Groups["minutes"].Value, now);
+			if (!time.HasValue)
+				return null;
 
 			var action_string = match.Groups["action"].Value;
 			Command.Action action;
@@ -122,11 +147,26 @@ namespace DotaBot
 				return null;
 			}
 
-			var time = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0);
-			if (time < now)
-				time = time.AddDays(1);
+			return new Command { time = time.Value, action = action };
+		}
 
-			return new Command { time = time, action = action };
+		static Command ParseReschedule(string str, DateTime now)
+		{
+			var regex = String.Join(@"\s*", new string[] {
+				CommandPrefixRegex, TimeRegex("from_hours", "from_minutes"), "->" , TimeRegex("to_hours", "to_minutes"), @"\?", "$"});
+			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);
+			if (!match.Success)
+				return null;
+
+			var from_time = ParseTime(match.Groups["from_hours"].Value, match.Groups["from_minutes"].Value, now);
+			if (!from_time.HasValue)
+				return null;
+
+			var to_time = ParseTime(match.Groups["to_hours"].Value, match.Groups["to_minutes"].Value, now);
+			if (!to_time.HasValue)
+				return null;
+
+			return new Command { action = Command.Action.RescheduleProposal, time = from_time.Value, time2 = to_time.Value};
 		}
 	}
 }

@@ -128,5 +128,4 @@ public class Program
 // TODO: add @all on creating a new dota
 // TODO: randomize texts
 // TODO: add randomized descriptions to players e.g. "Goovie, pogromca kotletów"
-// TODO: github + deploy z githuba
-// TODO: run Unit Tests on GH before deploying to Azure
+// TODO: add reserve list printing when > 5 players
