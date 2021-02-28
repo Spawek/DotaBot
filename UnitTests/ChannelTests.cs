@@ -41,10 +41,7 @@ namespace UnitTests
         public void OldGamesAreCleanedUp()
         {
             using var db = new Db("IN_MEMORY");
-
-            ulong guild_id = 123;
-            ulong channel_id = 234;
-            var channel = new Channel(db, guild_id, channel_id);
+            var channel = new Channel(db, 123, 234);
 
             var time1 = new DateTime(2020, 1, 1, 20, 30, 0);
             var time2 = new DateTime(2020, 1, 1, 21, 30, 0);
@@ -58,10 +55,7 @@ namespace UnitTests
         public void PlusPlusJoinsLatestCreatedGame()
         {
             using var db = new Db("IN_MEMORY");
-
-            ulong guild_id = 123;
-            ulong channel_id = 234;
-            var channel = new Channel(db, guild_id, channel_id);
+            var channel = new Channel(db, 123, 234);
 
             var time = new DateTime(2020, 1, 1, 20, 30, 0);
             channel.Execute(Parse("dota 21?", time), "muhah");
