@@ -13,6 +13,7 @@ namespace DotaBot
 
 		public DateTime time;  // used by: Add, Remove, RescheduleProposal
 		public DateTime time2;  // used by: RescheduleProposal 
+		public string as_player;  // used by: Add, Remove
 		public Action action;
 
 		// TODO: find a better way to print the state
@@ -30,9 +31,15 @@ namespace DotaBot
 				time2_string = $"time2: {time2}, ";
 			}
 
+			string as_player_string = "";
+			if (as_player != null)
+            {
+				as_player_string = $" (as_player: {as_player})";
+            }
+
 			string action_string = $"action: {action}";
 
-			return $"({time_string}{time2_string}action: { action})";
+			return $"({time_string}{time2_string}action: {action}){as_player_string}";
 		}
 
 		public override bool Equals(object obj)
@@ -41,7 +48,9 @@ namespace DotaBot
 			if (other == null)
 				return false;
 
-			return other.time == this.time && other.action == this.action;
+			return other.time == this.time &&
+				other.action == this.action && 
+				other.as_player == this.as_player;
 		}
 	}
 
@@ -57,7 +66,7 @@ namespace DotaBot
 			if (Regex.IsMatch(str, @"^\s*--\s*$") || Regex.IsMatch(str, @"^\s*\-1\s*$"))
 				return new Command { action = Command.Action.RemoveAll };
 			// "dota?"
-			if (Regex.IsMatch(str, $@"{CommandPrefixRegex}\s*\?\s*$", RegexOptions.IgnoreCase))
+			if (Regex.IsMatch(str, $@"^\s*{CommandPrefixRegex}\s*\?\s*$", RegexOptions.IgnoreCase))
 				return new Command { action = Command.Action.ShowGames };
 
 			// e.g. "dota 13:24 ++", "dota 12?", "dota 15--", "doto :30?"
@@ -73,10 +82,9 @@ namespace DotaBot
 			return null;
 		}
 
-
-
-		const string CommandPrefixRegex = @"^\s*(?:dota|dotka|doto|gramy)";
-		static string TimeRegex(string hours_group_name, string minutes_group_name){
+		const string CommandPrefixRegex = @"(?:dota|dotka|doto|gramy)";
+		static string TimeRegex(string hours_group_name, string minutes_group_name)
+		{
 			return $@"(?<{hours_group_name}>[0-9]?[0-9])?(?<{minutes_group_name}>(?:\.|:)[0-9][0-9])?";
 		}
 
@@ -132,9 +140,10 @@ namespace DotaBot
 
 		static Command ParseAddRemove(string str, DateTime now)
 		{
-			string add_remove_regex = @"(?<action>\+\+|--|\?||\+1|-1)";
-			var regex = String.Join(@"\s*", new string[] {
-				CommandPrefixRegex, TimeRegex("hours", "minutes"), add_remove_regex , "$"});
+			string as_player_regex = @"(?:\(\s*as\s+(?<as_player>\w+)\s*\))?";
+			string command_regex = @"(?<action>\+\+|--|\?||\+1|-1)";
+			var regex = BuildRegex(
+				as_player_regex, CommandPrefixRegex, TimeRegex("hours", "minutes"), command_regex , "$");
 			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);
 			if (!match.Success)
 				return null;
@@ -142,6 +151,12 @@ namespace DotaBot
 			var time = ParseTime(match.Groups["hours"].Value, match.Groups["minutes"].Value, now);
 			if (!time.HasValue)
 				return null;
+
+			string as_player = null;
+			if (match.Groups["as_player"].Value != "")
+            {
+				as_player = match.Groups["as_player"].Value;
+            }
 
 			var action_string = match.Groups["action"].Value;
 			Command.Action action;
@@ -159,7 +174,7 @@ namespace DotaBot
 				return null;
 			}
 
-			return new Command { time = time.Value, action = action };
+			return new Command { time = time.Value, action = action, as_player = as_player };
 		}
 
 		static Command ParseReschedule(string str, DateTime now)

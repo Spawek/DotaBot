@@ -105,7 +105,6 @@ public class Program
 				channel.CleanOldGames(cetTime);
 				channel.Execute(command, author);
 			}
-
 		}
 		catch(Exception e)
         {

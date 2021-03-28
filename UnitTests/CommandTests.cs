@@ -59,6 +59,16 @@ namespace UnitTests
                     time = new DateTime(2020, 5, 12, 5, 35, 0),
                     time2 = new DateTime(2020, 5, 12, 6, 15, 0)
                 });
+
+            Assert.AreEqual(Parse("(as spa_wek) dota 8:30?", now),
+                new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0), as_player = "spa_wek" });
+            Assert.AreEqual(Parse("  (  as  spawek  )  dota 8:30?", now),
+                new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0), as_player = "spawek" });
+
+            Assert.AreEqual(Parse("(as spa wek) dota 8:30?", now), null);
+            Assert.AreEqual(Parse("test gramy 8:30?", now), null);
+            Assert.AreEqual(Parse("gramy 8:30? test", now), null);
+            Assert.AreEqual(Parse("dota ++", now), null);  // no hour
         }
 
         [TestMethod]

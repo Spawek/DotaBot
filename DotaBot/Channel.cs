@@ -49,6 +49,7 @@ namespace DotaBot
 
 		private void ExecuteInner(Command command, string player)
 		{
+			string target_player = command.as_player == null ? player : $"{command.as_player} (added by {player})";
 			if (command.action == Command.Action.Add)
 			{
 				var matched = Games.Where(x => x.Time == command.time).FirstOrDefault();
@@ -58,7 +59,7 @@ namespace DotaBot
 					{
 						ChannelId = channel_id,
 						GuildId = guild_id,
-						Players = new string[] { player },
+						Players = new string[] { target_player },
 						Time = command.time
 					};
 					db.DotaBotGames.Add(new_game);
@@ -66,14 +67,14 @@ namespace DotaBot
 				}
 				else
 				{
-					if (!matched.Players.AsSpan().Contains(player))
+					if (!matched.Players.AsSpan().Contains(target_player))
 					{
 						var list = new List<string>(matched.Players);
-						list.Add(player);
+						list.Add(target_player);
 						//list = list.OrderByDescending(x => x != "goovie").ToList();
 						matched.Players = list.ToArray();
 
-						SendMessage($"{player} dołączył do gry\n{PrintGame(matched)}");
+						SendMessage($"{target_player} dołączył do gry\n{PrintGame(matched)}");
 					}
 				}
 			}
@@ -82,10 +83,10 @@ namespace DotaBot
 				var matched = Games.Where(x => x.Time == command.time).FirstOrDefault();
 				if (matched != null)
 				{
-					if (matched.Players.AsSpan().Contains(player))
+					if (matched.Players.AsSpan().Contains(target_player))
 					{
 						var list = new List<string>(matched.Players);
-						list.Remove(player);
+						list.Remove(target_player);
 						matched.Players = list.ToArray();
 
 						if (matched.Players.Length == 0)
@@ -95,7 +96,7 @@ namespace DotaBot
 						}
 						else
 						{
-							SendMessage($"{player} zrezygnował z gry\n{PrintGame(matched)}");
+							SendMessage($"{target_player} zrezygnował z gry\n{PrintGame(matched)}");
 						}
 					}
 				}
