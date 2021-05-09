@@ -88,12 +88,15 @@ namespace UnitTests
             var time = new DateTime(2020, 1, 1, 20, 30, 0);
             channel.Execute(Parse("dota 21?", time), "muhah");
             channel.Execute(Parse("(as spawek) dota 21++", time), "muhah");
+            channel.Execute(Parse("(as dragon) ++", time), "muhah");
+            channel.Execute(Parse("(as removed) ++", time), "muhah");
+            channel.Execute(Parse("(as removed) --", time), "muhah");
 
             var games = db.DotaBotGames.ToList();
             Assert.AreEqual(games.Count, 1);
             var game = games.First();
             Assert.AreEqual(game.Time, new DateTime(2020, 1, 1, 21, 0, 0));
-            CollectionAssert.AreEqual(game.Players, new string[] { "muhah", "spawek (added by muhah)" });
+            CollectionAssert.AreEqual(game.Players, new string[] { "muhah", "spawek (added by muhah)",  "dragon (added by muhah)" });
         }
     }
 }

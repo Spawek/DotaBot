@@ -54,16 +54,36 @@ namespace DotaBot
 		}
 	}
 
+	// Check tests when modyfying it.
 	public static class ParseCommand
 	{
-		// Check tests when modyfying it.
 		public static Command Parse(string str, DateTime now)
 		{
-			// "++" or "+1"
-			if (Regex.IsMatch(str, @"^\s*\+\+\s*$") || Regex.IsMatch(str, @"^\s*\+1\s*$"))
+			string as_player_regex = @"(?:\(\s*as\s(?<as_player>[^)]+)\s*\))";
+			Match match = Regex.Match(str, as_player_regex, RegexOptions.IgnoreCase);
+
+			if (match.Success)
+            {
+				string str_without_as_player = Regex.Replace(str, as_player_regex, "");
+				Command ret = ParseInternal(str_without_as_player, now);
+				if (ret != null)
+                {
+					ret.as_player = match.Groups["as_player"].Value.Trim();
+                }
+				return ret;
+			}
+
+			return ParseInternal(str, now);
+		}
+
+		// TODO: rename
+		private static Command ParseInternal(string str, DateTime now)
+        {
+			// "++" or "+1" or "dota ++"
+			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+\+\s*$") || Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+1\s*$"))
 				return new Command { action = Command.Action.JoinLatestGame };
-			// "--" or "-1"
-			if (Regex.IsMatch(str, @"^\s*--\s*$") || Regex.IsMatch(str, @"^\s*\-1\s*$"))
+			// "--" or "-1" or "dota --"
+			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*--\s*$") || Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\-1\s*$"))
 				return new Command { action = Command.Action.RemoveAll };
 			// "dota?"
 			if (Regex.IsMatch(str, $@"^\s*{CommandPrefixRegex}\s*\?\s*$", RegexOptions.IgnoreCase))
@@ -140,10 +160,9 @@ namespace DotaBot
 
 		static Command ParseAddRemove(string str, DateTime now)
 		{
-			string as_player_regex = @"(?:\(\s*as\s+(?<as_player>\w+)\s*\))?";
 			string command_regex = @"(?<action>\+\+|--|\?||\+1|-1)";
 			var regex = BuildRegex(
-				as_player_regex, CommandPrefixRegex, TimeRegex("hours", "minutes"), command_regex , "$");
+				CommandPrefixRegex, TimeRegex("hours", "minutes"), command_regex , "$");
 			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);
 			if (!match.Success)
 				return null;

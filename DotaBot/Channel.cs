@@ -114,14 +114,14 @@ namespace DotaBot
 							action = Command.Action.Add,
 							time = Games.OrderBy(x => x.Id).ToList().Last().Time  // TODO: if ids are not created monotonically: add game creation time to DB
 						},
-						player);
+						target_player);
 				}
 			}
 			else if (command.action == Command.Action.RemoveAll)
 			{
 				foreach (var game in db.DotaBotGames.ToList())
 				{
-					ExecuteInner(new Command { action = Command.Action.Remove, time = game.Time }, player);
+					ExecuteInner(new Command { action = Command.Action.Remove, time = game.Time }, target_player);
 				}
 			}
 			else if (command.action == Command.Action.ShowGames)

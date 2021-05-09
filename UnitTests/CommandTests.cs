@@ -38,12 +38,11 @@ namespace UnitTests
             Assert.AreEqual(Parse("dotka :15 -1", now),
                 new Command { action = Command.Action.Remove, time = new DateTime(2020, 5, 12, 6, 15, 0) });
 
-            Assert.AreEqual(Parse("++", now),
-                new Command { action = Command.Action.JoinLatestGame });
-            Assert.AreEqual(Parse("--", now),
-                new Command { action = Command.Action.RemoveAll });
-            Assert.AreEqual(Parse("dota?", now),
-                new Command { action = Command.Action.ShowGames });
+            Assert.AreEqual(Parse("++", now), new Command { action = Command.Action.JoinLatestGame });
+            Assert.AreEqual(Parse("dota ++", now), new Command { action = Command.Action.JoinLatestGame });
+            Assert.AreEqual(Parse("--", now), new Command { action = Command.Action.RemoveAll });
+            Assert.AreEqual(Parse("dota --", now), new Command { action = Command.Action.RemoveAll });
+            Assert.AreEqual(Parse("dota?", now), new Command { action = Command.Action.ShowGames });
 
             Assert.AreEqual(Parse("dota 16 -> 17?", now),
                 new Command
@@ -64,17 +63,19 @@ namespace UnitTests
                 new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0), as_player = "spa_wek" });
             Assert.AreEqual(Parse("  (  as  spawek  )  dota 8:30?", now),
                 new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0), as_player = "spawek" });
+            Assert.AreEqual(Parse("  (  as  spawek  )  dota ++", now),
+                new Command { action = Command.Action.JoinLatestGame, as_player = "spawek" });
+            Assert.AreEqual(Parse("  (  as  spawek  )  dota --", now),
+                new Command { action = Command.Action.RemoveAll, as_player = "spawek" });
+            Assert.AreEqual(Parse("  (  as  spawek  )  ++", now),
+                new Command { action = Command.Action.JoinLatestGame, as_player = "spawek" });
+            Assert.AreEqual(Parse("  (  as  spawek  )  --", now),
+                new Command { action = Command.Action.RemoveAll, as_player = "spawek" });
+            Assert.AreEqual(Parse("  (  as  spa wek  )  ++", now),
+                new Command { action = Command.Action.JoinLatestGame, as_player = "spa wek" });
 
-            Assert.AreEqual(Parse("(as spa wek) dota 8:30?", now), null);
             Assert.AreEqual(Parse("test gramy 8:30?", now), null);
             Assert.AreEqual(Parse("gramy 8:30? test", now), null);
-            Assert.AreEqual(Parse("dota ++", now), null);  // no hour
-        }
-
-        [TestMethod]
-        public void MoveTimeProposalSerializeDeserializeTest()
-        {
-
         }
     }
 }
