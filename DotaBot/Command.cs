@@ -59,12 +59,12 @@ namespace DotaBot
 	{
 		public static Command Parse(string str, DateTime now)
 		{
-			string as_player_regex = @"(?:\(\s*as\s(?<as_player>[^)]+)\s*\))";
+			string as_player_regex = @"\(\s*as\s(?<as_player>[^)]+)\s*\)";
 			Match match = Regex.Match(str, as_player_regex, RegexOptions.IgnoreCase);
 
 			if (match.Success)
             {
-				string str_without_as_player = Regex.Replace(str, as_player_regex, "");
+				string str_without_as_player = Regex.Replace(str, as_player_regex, "", RegexOptions.IgnoreCase);
 				Command ret = ParseInternal(str_without_as_player, now);
 				if (ret != null)
                 {
@@ -80,10 +80,12 @@ namespace DotaBot
 		private static Command ParseInternal(string str, DateTime now)
         {
 			// "++" or "+1" or "dota ++"
-			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+\+\s*$") || Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+1\s*$"))
+			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+\+\s*$", RegexOptions.IgnoreCase) ||
+				Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+1\s*$", RegexOptions.IgnoreCase))
 				return new Command { action = Command.Action.JoinLatestGame };
 			// "--" or "-1" or "dota --"
-			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*--\s*$") || Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\-1\s*$"))
+			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*--\s*$", RegexOptions.IgnoreCase) || 
+				Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\-1\s*$", RegexOptions.IgnoreCase))
 				return new Command { action = Command.Action.RemoveAll };
 			// "dota?"
 			if (Regex.IsMatch(str, $@"^\s*{CommandPrefixRegex}\s*\?\s*$", RegexOptions.IgnoreCase))

@@ -73,6 +73,8 @@ namespace UnitTests
                 new Command { action = Command.Action.RemoveAll, as_player = "spawek" });
             Assert.AreEqual(Parse("  (  as  spa wek  )  ++", now),
                 new Command { action = Command.Action.JoinLatestGame, as_player = "spa wek" });
+            Assert.AreEqual(Parse("(As spawek)++", now),
+                new Command { action = Command.Action.JoinLatestGame, as_player = "spawek" });
 
             Assert.AreEqual(Parse("test gramy 8:30?", now), null);
             Assert.AreEqual(Parse("gramy 8:30? test", now), null);
