@@ -33,6 +33,13 @@ namespace UnitTests
             Assert.AreEqual(Parse("gramy 8:30?", now),
                 new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0) });
 
+            // joining a game that started < 5 min ago
+            Assert.AreEqual(Parse("dota 5:26++", now),
+                new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 5, 26, 0) });
+            // joining a game that started > 5 min ago should point the game to the next day
+            Assert.AreEqual(Parse("dota 5:25++", now),
+                new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 13, 5, 25, 0) });
+
             Assert.AreEqual(Parse("dota 15--", now),
                 new Command { action = Command.Action.Remove, time = new DateTime(2020, 5, 12, 15, 0, 0) });
             Assert.AreEqual(Parse("dotka :15 -1", now),

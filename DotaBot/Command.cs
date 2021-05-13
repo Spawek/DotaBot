@@ -145,7 +145,7 @@ namespace DotaBot
 				return null;
 
 			var time = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0);
-			if (time < now)
+			if (time < now - TimeSpan.FromMinutes(5))  // 5 minutes threshold added if someone wants to join a game that was just started
 				time = time.AddDays(1);
 
 			return time;
