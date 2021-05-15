@@ -132,6 +132,7 @@ namespace UnitTests
             channel.Execute(Parse("dota 21?", time), "vifon");
             channel.Execute(Parse("++", time), "spawek");
             channel.Execute(Parse("++", time), "muhah");
+            channel.Execute(Parse("++", time), "muhah");
 
             var games = db.DotaBotGames.ToList();
             Assert.AreEqual(games.Count, 1);

@@ -102,7 +102,7 @@ namespace DotaBot
 						existing_game.Players[added_by_someone_else] = player;
 						SendMessage($"{player.Name} sam włączył się do gry\n{PrintGame(existing_game)}");
 					}
-					else if (existing_game.Players.Any(x => x.Name != player.Name))
+					else if (existing_game.Players.All(x => x.Name != player.Name))
 					{
 						existing_game.Players.Add(player);
 						SendMessage($"{player.Name} dołączył do gry\n{PrintGame(existing_game)}");
