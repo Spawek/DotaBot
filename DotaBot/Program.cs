@@ -67,23 +67,30 @@ public class Program
 	static TimeSpan NOTIFICATION_DELAY = TimeSpan.FromMinutes(3);
 	private void GameReminder(object s)
     {
-		var state = s as GameReminderState;
-		using var db = new Db();
-		var now = CetTimeNow();
-		var games_to_notify = db.DotaBotGames.ToList().Where(x => 
-			x.Time - NOTIFICATION_DELAY > state.last_check && 
-			x.Time - NOTIFICATION_DELAY <= now);
-
-        foreach (var game in games_to_notify)
+		try
         {
-			if (!IsItMyToHandle(game.GuildId, game.ChannelId))
-				continue;
+			var state = s as GameReminderState;
+			using var db = new Db();
+			var now = CetTimeNow();
+			var games_to_notify = db.DotaBotGames.ToList().Where(x => 
+				x.Time - NOTIFICATION_DELAY > state.last_check && 
+				x.Time - NOTIFICATION_DELAY <= now);
 
-			var channel = new Channel(discord, db, game.GuildId, game.ChannelId);
-			channel.SendReminder(game);
+			foreach (var game in games_to_notify)
+			{
+				if (!IsItMyToHandle(game.GuildId, game.ChannelId))
+					continue;
+
+				var channel = new Channel(discord, db, game.GuildId, game.ChannelId);
+				channel.SendReminder(game);
+			}
+
+			state.last_check = now;
 		}
-
-		state.last_check = now;
+		catch (Exception e)
+        {
+			Log($"Game reminder exception: {e}");
+		}
 	}
 
 	// Definition of routing (Discord channel -> DotaBot instance).
