@@ -9,10 +9,9 @@ namespace DotaBot
 {
 	public class Command
 	{
-		public enum Action { Add, Remove, JoinLatestGame, RemoveAll, ShowGames, RescheduleProposal };
+		public enum Action { Add, Remove, JoinLatestGame, RemoveAll, ShowGames };
 
-		public DateTime time;  // used by: Add, Remove, RescheduleProposal
-		public DateTime time2;  // used by: RescheduleProposal 
+		public DateTime time;  // used by: Add, Remove
 		public string as_player;  // used by: Add, Remove
 		public string note;  // used by: Add, AddLatest
 		public Action action;
@@ -23,12 +22,6 @@ namespace DotaBot
 			if (time != new DateTime())
 			{
 				time_string = $"time: {time}, ";
-			}
-
-			string time2_string = "";
-			if (time2 != new DateTime())
-			{
-				time2_string = $"time2: {time2}, ";
 			}
 
 			string as_player_string = "";
@@ -45,7 +38,7 @@ namespace DotaBot
 
 			string action_string = $"action: {action}";
 
-			return $"({time_string}{time2_string}{action_string}){as_player_string}{note_string}";
+			return $"({time_string}{action_string}){as_player_string}{note_string}";
 		}
 
 		public override bool Equals(object obj)
@@ -149,11 +142,6 @@ namespace DotaBot
 			if (add_remove != null)
 				return add_remove;
 
-			// e.g. "dota 16 -> 17:40?"
-			var reschedule = ParseReschedule(str, now);
-			if (reschedule != null)
-				return reschedule;
-
 			return null;
 		}
 
@@ -249,25 +237,6 @@ namespace DotaBot
 			}
 
 			return new Command { time = time.Value, action = action, as_player = as_player };
-		}
-
-		static Command ParseReschedule(string str, DateTime now)
-		{
-			var regex = String.Join(@"\s*", new string[] {
-				CommandPrefixRegex, TimeRegex("from_hours", "from_minutes"), "->" , TimeRegex("to_hours", "to_minutes"), @"\?", "$"});
-			var match = Regex.Match(str, regex, RegexOptions.IgnoreCase);
-			if (!match.Success)
-				return null;
-
-			var from_time = ParseTime(match.Groups["from_hours"].Value, match.Groups["from_minutes"].Value, now);
-			if (!from_time.HasValue)
-				return null;
-
-			var to_time = ParseTime(match.Groups["to_hours"].Value, match.Groups["to_minutes"].Value, now);
-			if (!to_time.HasValue)
-				return null;
-
-			return new Command { action = Command.Action.RescheduleProposal, time = from_time.Value, time2 = to_time.Value};
 		}
 	}
 }

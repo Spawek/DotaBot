@@ -51,21 +51,6 @@ namespace UnitTests
             Assert.AreEqual(Parse("dota --", now), new Command { action = Command.Action.RemoveAll });
             Assert.AreEqual(Parse("dota?", now), new Command { action = Command.Action.ShowGames });
 
-            Assert.AreEqual(Parse("dota 16 -> 17?", now),
-                new Command
-                {
-                    action = Command.Action.RescheduleProposal,
-                    time = new DateTime(2020, 5, 12, 16, 0, 0),
-                    time2 = new DateTime(2020, 5, 12, 17, 0, 0)
-                });
-            Assert.AreEqual(Parse(" dota  :35->6:15 ?", now),
-                new Command
-                {
-                    action = Command.Action.RescheduleProposal,
-                    time = new DateTime(2020, 5, 12, 5, 35, 0),
-                    time2 = new DateTime(2020, 5, 12, 6, 15, 0)
-                });
-
             Assert.AreEqual(Parse("(as spa_wek) dota 8:30?", now),
                 new Command { action = Command.Action.Add, time = new DateTime(2020, 5, 12, 8, 30, 0), as_player = "spa_wek" });
             Assert.AreEqual(Parse("  (  as  spawek  )  dota 8:30?", now),

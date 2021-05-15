@@ -42,7 +42,6 @@ public class Program
 				discord = new DiscordSocketClient();
 				discord.Log += LogHandler;
 				discord.MessageReceived += MessageReceived;
-                discord.ReactionAdded += ReactionAdded;
 				await discord.LoginAsync(TokenType.Bot, discordToken);
 				await discord.StartAsync();
 				Log("Registered to Discord");
@@ -103,14 +102,6 @@ public class Program
 		return true;
 	}
 
-	private Task ReactionAdded(Cacheable<IUserMessage, ulong> data, ISocketMessageChannel channel, SocketReaction reaction)
-    {
-		var expected_emote = "👍";
-		var msg = data.GetOrDownloadAsync().Result;
-
-		return Task.CompletedTask;
-    }
-
 	private Task MessageReceived(SocketMessage msg)
     {
 		try
@@ -153,8 +144,6 @@ public class Program
 
 }
 
-// TODO: add mentions to the reminder
-// TODO: add @all on creating a new dota
 // TODO: randomize texts
 // TODO: add randomized descriptions to players e.g. "Goovie, pogromca kotletów"
 // TODO: add reserve list printing when > 5 players
