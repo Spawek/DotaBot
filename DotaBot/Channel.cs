@@ -27,7 +27,8 @@ namespace DotaBot
             {
                 // TODO: verify if the message was actually sent
                 // TODO: measure time from receiving msg to sending answer
-                discord.GetGuild(guild_id).GetTextChannel(channel_id).SendMessageAsync(msg);
+                discord.GetGuild(guild_id).GetTextChannel(channel_id).SendMessageAsync(
+					msg, allowedMentions: new Discord.AllowedMentions(Discord.AllowedMentionTypes.Users));
             }
         }
 
@@ -189,7 +190,23 @@ namespace DotaBot
 			}
 		}
 
-		public void CleanOldGames(DateTime now)
+        public void SendReminder(DotaBotGame game)
+        {
+			discord.DownloadUsersAsync(new List<Discord.IGuild> { }).Wait();
+			var users = discord.GetGuild(game.GuildId).Users;
+
+			List<string> mentions = new List<string>();
+            foreach (var player in game.Players)
+            {
+				var found = users.FirstOrDefault(x => x.Username == player.Name);
+				if (found != null)
+					mentions.Add(found.Mention);
+            }
+
+			SendMessage($"Zaraz gramy! {String.Join(", ", mentions)}\n{PrintGame(game)}");
+		}
+
+        public void CleanOldGames(DateTime now)
 		{
 			using var transaction = db.Database.BeginTransaction();
 

@@ -1,16 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DotaBot;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.AzureAppConfiguration;
-using System.Collections;
 using static DotaBot.Logger;
 using static DotaBot.ParseCommand;
+using System.Threading;
 
 public class Program
 {
@@ -20,8 +16,17 @@ public class Program
 		=> new Program().MainAsync().GetAwaiter().GetResult();
 	private static String Host = Configuration.GetConfig("Host");
 
+	class GameReminderState
+    {
+		public DateTime last_check;
+    }
+
 	public async Task MainAsync()
 	{
+		GameReminderState game_reminder_state = new GameReminderState { last_check = CetTimeNow() };
+		Timer game_reminder = new Timer(new TimerCallback(GameReminder), game_reminder_state, 
+			dueTime: TimeSpan.FromSeconds(60), period: TimeSpan.FromSeconds(60));
+
 		while (true)
 		{
 			try
@@ -49,8 +54,37 @@ public class Program
             {
 				Log($"Main exception: {e}");
             }
-			System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+
+			Thread.Sleep(TimeSpan.FromSeconds(1));
 		}
+	}
+
+	private DateTime CetTimeNow()
+    {
+		return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+			TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
+	}
+	
+	static TimeSpan NOTIFICATION_DELAY = TimeSpan.FromMinutes(3);
+	private void GameReminder(object s)
+    {
+		var state = s as GameReminderState;
+		using var db = new Db();
+		var now = CetTimeNow();
+		var games_to_notify = db.DotaBotGames.ToList().Where(x => 
+			x.Time - NOTIFICATION_DELAY > state.last_check && 
+			x.Time - NOTIFICATION_DELAY <= now);
+
+        foreach (var game in games_to_notify)
+        {
+			if (!IsItMyToHandle(game.GuildId, game.ChannelId))
+				continue;
+
+			var channel = new Channel(discord, db, game.GuildId, game.ChannelId);
+			channel.SendReminder(game);
+		}
+
+		state.last_check = now;
 	}
 
 	// Definition of routing (Discord channel -> DotaBot instance).
@@ -90,21 +124,18 @@ public class Program
 			if (author == "DotaBot")
 				return Task.CompletedTask;
 
-			var cetTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
-				TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
+			var time = CetTimeNow();
 			string content = msg.Content;
-			Command command = Parse(content, cetTime);
+			Command command = Parse(content, time);
 			if (command == null)
 				return Task.CompletedTask;
 
 			Log($"Recognized command: {command} ({author}: \"{content}\")");
 
-			using (var db = new Db())
-            {
-				var channel = new Channel(discord, db, guild, discord_channel.Id);
-				channel.CleanOldGames(cetTime);
-				channel.Execute(command, author);
-			}
+			using var db = new Db();
+			var channel = new Channel(discord, db, guild, discord_channel.Id);
+			channel.CleanOldGames(time);
+			channel.Execute(command, author);
 		}
 		catch(Exception e)
         {
@@ -122,7 +153,6 @@ public class Program
 
 }
 
-// TODO: reminder 5 min before game + on the time of the game (only if >= 2 players)
 // TODO: add mentions to the reminder
 // TODO: add @all on creating a new dota
 // TODO: randomize texts
