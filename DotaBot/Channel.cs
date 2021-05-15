@@ -100,7 +100,6 @@ namespace DotaBot
 					if (added_by_someone_else != -1 && player.AddedBy == null)
 					{
 						existing_game.Players[added_by_someone_else] = player;
-						db.Entry(existing_game).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 						SendMessage($"{player.Name} sam włączył się do gry\n{PrintGame(existing_game)}");
 					}
 					else if (existing_game.Players.Any(x => x.Name != player.Name))
@@ -108,6 +107,7 @@ namespace DotaBot
 						existing_game.Players.Add(player);
 						SendMessage($"{player.Name} dołączył do gry\n{PrintGame(existing_game)}");
 					}
+					db.Entry(existing_game).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 				}
 			}
 			else if (command.action == Command.Action.Remove)
@@ -121,6 +121,7 @@ namespace DotaBot
 					if (player_to_remove != null)
 					{
 						game.Players.Remove(player_to_remove);
+						db.Entry(game).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 						if (game.Players.Count == 0)
 						{
 							SendMessage($"Brak chętnych na Dotkę o {game.Time.Hour}:{game.Time.Minute:D2} :(");

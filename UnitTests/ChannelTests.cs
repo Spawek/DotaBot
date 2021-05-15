@@ -122,6 +122,29 @@ namespace UnitTests
                 new List<Player> { new Player { Name = "Jakub Łapot" } });
         }
 
+        [TestMethod]
+        public void Simple3PlayerScenario()
+        {
+            using var db = MakeDb();
+            var channel = new Channel(db, 123, 234);
+
+            var time = new DateTime(2020, 1, 1, 20, 30, 0);
+            channel.Execute(Parse("dota 21?", time), "vifon");
+            channel.Execute(Parse("++", time), "spawek");
+            channel.Execute(Parse("++", time), "muhah");
+
+            var games = db.DotaBotGames.ToList();
+            Assert.AreEqual(games.Count, 1);
+            var game = games.First();
+            Assert.AreEqual(game.Time, new DateTime(2020, 1, 1, 21, 0, 0));
+            CollectionAssert.AreEqual(game.Players,
+                new List<Player> { 
+                    new Player { Name = "vifon" },
+                    new Player { Name = "spawek" },
+                    new Player { Name = "muhah" }});
+
+        }
+
         // TODO: add event for sending messages so it can be tested
     }
 }
