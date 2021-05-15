@@ -14,9 +14,9 @@ namespace DotaBot
 		public DateTime time;  // used by: Add, Remove, RescheduleProposal
 		public DateTime time2;  // used by: RescheduleProposal 
 		public string as_player;  // used by: Add, Remove
+		public string note;  // used by: Add, AddLatest
 		public Action action;
 
-		// TODO: find a better way to print the state
 		public override string ToString()
 		{
 			string time_string = "";
@@ -37,9 +37,15 @@ namespace DotaBot
 				as_player_string = $" (as_player: {as_player})";
             }
 
+			string note_string = "";
+			if (note != null)
+			{
+				note_string = $" (note : {note})";
+			}
+
 			string action_string = $"action: {action}";
 
-			return $"({time_string}{time2_string}action: {action}){as_player_string}";
+			return $"({time_string}{time2_string}{action_string}){as_player_string}{note_string}";
 		}
 
 		public override bool Equals(object obj)
@@ -50,22 +56,51 @@ namespace DotaBot
 
 			return other.time == this.time &&
 				other.action == this.action && 
-				other.as_player == this.as_player;
+				other.as_player == this.as_player &&
+				other.note == this.note;
 		}
 	}
 
-	// Check tests when modyfying it.
+	// "(as Muhah) Dota 15:40 ++ (only if Dragon plays)"
+	//        ||
+	//        \/
+	// ParseAsPlayer()
+	//        ||
+	// "Dota 15:40 ++ (only if Dragon plays)"
+	// as "Muhah"
+	//        ||
+	//        \/
+	// ParseNote()
+	//        ||
+	//        \/
+	// "Dota 15:40 ++"
+	// as "Muhah"
+	// Note: "only if Dragon plays"
+	//        ||
+	//        \/
+	// ParseAction()
+	//        ||
+	//        \/
+	// Command: JoinGame
+	// time: 15:40
+	// as "Muhah"
+	// Note: "only if Dragon plays"
 	public static class ParseCommand
 	{
 		public static Command Parse(string str, DateTime now)
+        {
+			return ParseAsPlayer(str, now);
+        }
+
+		public static Command ParseAsPlayer(string str, DateTime now)
 		{
-			string as_player_regex = @"\(\s*as\s(?<as_player>[^)]+)\s*\)";
-			Match match = Regex.Match(str, as_player_regex, RegexOptions.IgnoreCase);
+			Regex as_player_regex = new Regex(@"\(\s*as\s(?<as_player>[^)]+)\s*\)", RegexOptions.IgnoreCase);
+			Match match = as_player_regex.Match(str);
 
 			if (match.Success)
             {
-				string str_without_as_player = Regex.Replace(str, as_player_regex, "", RegexOptions.IgnoreCase);
-				Command ret = ParseInternal(str_without_as_player, now);
+				string str_without_as_player = as_player_regex.Replace(str, "");
+				Command ret = ParseNote(str_without_as_player, now);
 				if (ret != null)
                 {
 					ret.as_player = match.Groups["as_player"].Value.Trim();
@@ -73,11 +108,29 @@ namespace DotaBot
 				return ret;
 			}
 
-			return ParseInternal(str, now);
+			return ParseNote(str, now);
 		}
 
-		// TODO: rename
-		private static Command ParseInternal(string str, DateTime now)
+		public static Command ParseNote(string str, DateTime now)
+        {
+			Regex note_regex = new Regex(@"\((?<note>[^)]+)\)\s*$", RegexOptions.IgnoreCase);
+			Match match = note_regex.Match(str);
+
+			if (match.Success)
+			{
+				string str_without_as_player = note_regex.Replace(str, "");
+				Command ret = ParseAction(str_without_as_player, now);
+				if (ret != null)
+				{
+					ret.note = match.Groups["note"].Value.Trim();
+				}
+				return ret;
+			}
+
+			return ParseAction(str, now);
+		}
+
+		private static Command ParseAction(string str, DateTime now)
         {
 			// "++" or "+1" or "dota ++"
 			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+\+\s*$", RegexOptions.IgnoreCase) ||

@@ -47,19 +47,44 @@ namespace DotaBot
 			transaction.Commit();
 		}
 
-		private void ExecuteInner(Command command, string player)
+		static private Dictionary<string, string> AsPlayerAliases = new Dictionary<string, string>
 		{
-			string target_player = command.as_player == null ? player : $"{command.as_player} (added by {player})";
+			{ "dragon", "Jakub Łapot" },
+			{ "dagon", "Jakub Łapot" },
+			{ "goobie", "goovie" },
+			{ "wojtek", "Bixkog" },
+			{ "maciek", "Spawek" },
+			{ "marcin", "grzybek" },
+			{ "muha", "muhah" },
+			{ "mucha", "muhah" },
+			{ "muszka", "muhah" },
+		};
+
+		static private string NormalizeAsPlayer(string as_player)
+        {
+			if (AsPlayerAliases.TryGetValue(as_player.ToLower(), out var alias))
+				return alias;
+			return as_player;
+		}
+
+		private void ExecuteInner(Command command, string requester)
+		{
+			var player = new Player { 
+				Name = command.as_player == null ? requester : NormalizeAsPlayer(command.as_player),
+				Note = command.note,
+				AddedBy = command.as_player == null ? null : requester
+			};
+
 			if (command.action == Command.Action.Add)
 			{
-				var matched = Games.Where(x => x.Time == command.time).FirstOrDefault();
-				if (matched == null)
+				var existing_game = Games.Where(x => x.Time == command.time).FirstOrDefault();
+				if (existing_game == null)
 				{
 					var new_game = new DotaBotGame
 					{
 						ChannelId = channel_id,
 						GuildId = guild_id,
-						Players = new string[] { target_player },
+						Players = new List<Player> { player },
 						Time = command.time
 					};
 					db.DotaBotGames.Add(new_game);
@@ -67,36 +92,43 @@ namespace DotaBot
 				}
 				else
 				{
-					if (!matched.Players.AsSpan().Contains(target_player))
+					// replace same player added by someone else
+					// TODO: test
+					var added_by_someone_else = existing_game.Players.FindIndex(x =>
+						x.Name.ToLower() == player.Name.ToLower() &&
+						x.AddedBy != null);
+					if (added_by_someone_else != -1 && player.AddedBy == null)
 					{
-						var list = new List<string>(matched.Players);
-						list.Add(target_player);
-						//list = list.OrderByDescending(x => x != "goovie").ToList();
-						matched.Players = list.ToArray();
-
-						SendMessage($"{target_player} dołączył do gry\n{PrintGame(matched)}");
+						existing_game.Players[added_by_someone_else] = player;
+						db.Entry(existing_game).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+						SendMessage($"{player.Name} sam włączył się do gry\n{PrintGame(existing_game)}");
+					}
+					else if (existing_game.Players.Any(x => x.Name != player.Name))
+					{
+						existing_game.Players.Add(player);
+						SendMessage($"{player.Name} dołączył do gry\n{PrintGame(existing_game)}");
 					}
 				}
 			}
 			else if (command.action == Command.Action.Remove)
 			{
-				var matched = Games.Where(x => x.Time == command.time).FirstOrDefault();
-				if (matched != null)
+				var game = Games.FirstOrDefault(x => x.Time == command.time);
+				if (game != null)
 				{
-					if (matched.Players.AsSpan().Contains(target_player))
+					var player_to_remove = game.Players.FirstOrDefault(x =>
+						x.Name == player.Name &&
+						x.AddedBy == player.AddedBy);
+					if (player_to_remove != null)
 					{
-						var list = new List<string>(matched.Players);
-						list.Remove(target_player);
-						matched.Players = list.ToArray();
-
-						if (matched.Players.Length == 0)
+						game.Players.Remove(player_to_remove);
+						if (game.Players.Count == 0)
 						{
-							SendMessage($"Brak chętnych na Dotkę o {matched.Time.Hour}:{matched.Time.Minute:D2} :(");
-							db.DotaBotGames.Remove(matched);
+							SendMessage($"Brak chętnych na Dotkę o {game.Time.Hour}:{game.Time.Minute:D2} :(");
+							db.DotaBotGames.Remove(game);
 						}
 						else
 						{
-							SendMessage($"{target_player} zrezygnował z gry\n{PrintGame(matched)}");
+							SendMessage($"{player.Name} zrezygnował z gry\n{PrintGame(game)}");
 						}
 					}
 				}
@@ -109,19 +141,29 @@ namespace DotaBot
 				}
 				else
 				{
+					// Recursive call!
 					ExecuteInner(new Command
 						{
 							action = Command.Action.Add,
-							time = Games.OrderBy(x => x.Id).ToList().Last().Time  // TODO: if ids are not created monotonically: add game creation time to DB
+							as_player = command.as_player,
+							note = command.note,
+							time = Games.OrderBy(x => x.Id).ToList().Last().Time
 						},
-						target_player);
+						requester);
 				}
 			}
 			else if (command.action == Command.Action.RemoveAll)
 			{
 				foreach (var game in db.DotaBotGames.ToList())
 				{
-					ExecuteInner(new Command { action = Command.Action.Remove, time = game.Time }, target_player);
+					// Recursive call!
+					ExecuteInner(new Command 
+						{ 
+							action = Command.Action.Remove, 
+							as_player = command.as_player, 
+							time = game.Time 
+						},
+						requester);
 				}
 			}
 			else if (command.action == Command.Action.ShowGames)
@@ -168,7 +210,9 @@ namespace DotaBot
 			int i = 1;
 			foreach (var player in game.Players)
 			{
-				s += $" {i}) {player}\n";
+				string added_by = player.AddedBy == null ? "" : $" (dodany przez: {player.AddedBy})";
+				string note = player.Note == null ? "" : $" ({player.Note})";
+				s += $" {i}) {player.Name}{added_by}{note}\n";
 				i++;
 			}
 			s += "```";

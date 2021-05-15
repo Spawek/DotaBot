@@ -83,6 +83,11 @@ namespace UnitTests
             Assert.AreEqual(Parse("(As spawek)++", now),
                 new Command { action = Command.Action.JoinLatestGame, as_player = "spawek" });
 
+            Assert.AreEqual(Parse("++(why not)", now),
+                new Command { action = Command.Action.JoinLatestGame, note = "why not" });
+            Assert.AreEqual(Parse(" (as spawek) ++ (why not) ", now),
+                new Command { action = Command.Action.JoinLatestGame, note = "why not", as_player = "spawek" });
+
             Assert.AreEqual(Parse("test gramy 8:30?", now), null);
             Assert.AreEqual(Parse("gramy 8:30? test", now), null);
         }

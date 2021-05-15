@@ -7,6 +7,9 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace DotaBot
 {
@@ -21,7 +24,8 @@ namespace DotaBot
             this.connection_string = connnection_string;
         }
 
-        public Db() : this(Configuration.GetConnectionString("DBModel")) {
+        public Db() : this(Configuration.GetConnectionString("DBModel"))
+        {
             connection_string = Configuration.GetConnectionString("DBModel");
         }
 
@@ -52,8 +56,8 @@ namespace DotaBot
             modelBuilder.Entity<DotaBotGame>()
                 .Property(e => e.Players)
                 .HasConversion(
-                    v => string.Join(",SEPARATOR,", v),
-                    v => v.Split(",SEPARATOR,", StringSplitOptions.RemoveEmptyEntries));
+                    v => JsonConvert.SerializeObject(v),
+                    v => JsonConvert.DeserializeObject<List<Player>>(v));
 
             base.OnModelCreating(modelBuilder);
         }
@@ -61,6 +65,41 @@ namespace DotaBot
         public virtual DbSet<DotaBotGame> DotaBotGames { get; set; }
 
         private string connection_string;
+    }
+    public class Player
+    {
+        public string Name { get; set; }
+        public string AddedBy { get; set; }
+        public string Note { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            Player other = obj as Player;
+            if (other == null)
+                return false;
+
+            return 
+                this.Name == other.Name && 
+                this.AddedBy == other.AddedBy && 
+                this.Note == other.Note;
+        }
+
+        public override string ToString()
+        {
+            var added_by_string = "";
+            if (AddedBy != null)
+            {
+                added_by_string = $", added by: {AddedBy}";
+            }
+
+            var note_string = "";
+            if (Note != null)
+            {
+                note_string = $", note: {AddedBy}";
+            }
+
+            return $"(Name: {Name}{added_by_string}{note_string})";
+        }
     }
 
     public class DotaBotGame
@@ -75,7 +114,7 @@ namespace DotaBot
 
         public ulong ChannelId { get; set; }
 
-        public string[] Players { get; set; }
+        public List<Player> Players { get; set; }
 
         public override string ToString()
         {
