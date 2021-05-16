@@ -9,7 +9,7 @@ namespace DotaBot
 {
 	public class Command
 	{
-		public enum Action { Add, Remove, JoinLatestGame, RemoveAll, ShowGames };
+		public enum Action { Add, Remove, JoinLatestGame, RemoveAll, ShowGames, Help };
 
 		public DateTime time;  // used by: Add, Remove
 		public string as_player;  // used by: Add, Remove
@@ -125,6 +125,9 @@ namespace DotaBot
 
 		private static Command ParseAction(string str, DateTime now)
         {
+			// doto halp
+			if (Regex.IsMatch(str, $@"^\s*{CommandPrefixRegex}\s*{HelpRegex}\s*$", RegexOptions.IgnoreCase))
+				return new Command { action = Command.Action.Help };
 			// "++" or "+1" or "dota ++"
 			if (Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+\+\s*$", RegexOptions.IgnoreCase) ||
 				Regex.IsMatch(str, $@"^(?:\s*{CommandPrefixRegex})?\s*\+1\s*$", RegexOptions.IgnoreCase))
@@ -146,6 +149,7 @@ namespace DotaBot
 		}
 
 		const string CommandPrefixRegex = @"(?:dota|dotka|doto|gramy)";
+		const string HelpRegex = @"(?:halp|help|\-\-help|\-\-halp)";
 		static string TimeRegex(string hours_group_name, string minutes_group_name)
 		{
 			return $@"(?<{hours_group_name}>[0-9]?[0-9])?(?<{minutes_group_name}>(?:\.|:)[0-9][0-9])?";

@@ -146,6 +146,17 @@ namespace UnitTests
 
         }
 
+        [TestMethod]
+        public void HalpScenario()
+        {
+            using var db = MakeDb();
+            var channel = new Channel(db, 123, 234);
+
+            var time = new DateTime(2020, 1, 1, 20, 30, 0);
+            channel.Execute(Parse("doto halp", time), "muhah");
+            Assert.AreEqual(db.DotaBotGames.Count(), 0);
+        }
+
         // TODO: add event for sending messages so it can be tested
     }
 }

@@ -184,6 +184,23 @@ namespace DotaBot
 					SendMessage(s);
 				}
 			}
+			else if (command.action == Command.Action.Help)
+			{
+				string msg = $"=== DotaBot Halp Page ===\n"
+					+ "Aby użyć bota, użyj komendy ze zbioru: dota|dotka|doto|gramy (case insensitive).\n"
+					+ "Szczegółowa lista poleceń:\n"
+					+ "`doto ?` - Wyświetla listę gier\n"
+					+ "`doto ++|+1` - Dodaje Cie do najbliższej gry\n"
+					+ "`doto 15:30 ++|+1` - Dodaje Cie do gry o 15:30\n"
+					+ "`doto --|-1` - Usuwa Cie z najbliższej gry\n"
+					+ "`doto 15:30 --|-1` - Usuwa Cie z gry o 15:30\n"
+					+ "`doto 12?|12:00?|12.00?` - Tworzy grę o 12:00 i dodaje Cie do niej\n"
+					+ "`doto :45?` - Tworzy grę w :45 minucie aktualnej godziny i dodaje Cie do niej\n"
+					+ "`(as goobie) doto ++ ` - Dodaje Goobiego do najbliższej gry (komenda obsługuje zahardkodowane aliasy Kucy)\n"
+					+ "`doto ++ (tylko jeśli Grzybek zagra:*) ` - Dodaje Cie do najbliższej gry z adnotacją w nawiasie\n"
+					+ "`doto help|halp|--help|--halp` - Halp Page";
+				SendMessage(msg);
+			}
 			else
 			{
 				Log($"Unhandled action: {command.action}");
