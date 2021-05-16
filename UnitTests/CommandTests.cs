@@ -75,6 +75,12 @@ namespace UnitTests
 
             Assert.AreEqual(Parse("test gramy 8:30?", now), null);
             Assert.AreEqual(Parse("gramy 8:30? test", now), null);
+
+
+            Assert.AreEqual(Parse("dota halp", now),new Command { action = Command.Action.Help});
+            Assert.AreEqual(Parse("doto help", now), new Command { action = Command.Action.Help });
+            Assert.AreEqual(Parse("dota --help", now), new Command { action = Command.Action.Help });
+            Assert.AreEqual(Parse("doto --halp", now), new Command { action = Command.Action.Help });
         }
     }
 }
