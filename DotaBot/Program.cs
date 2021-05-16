@@ -74,7 +74,8 @@ public class Program
 			var now = CetTimeNow();
 			var games_to_notify = db.DotaBotGames.ToList().Where(x => 
 				x.Time - NOTIFICATION_DELAY > state.last_check && 
-				x.Time - NOTIFICATION_DELAY <= now);
+				x.Time - NOTIFICATION_DELAY <= now).ToList();
+			Log($"Game reminder found: {games_to_notify.Count} games");  // Debug only TODO: remove it
 
 			foreach (var game in games_to_notify)
 			{
