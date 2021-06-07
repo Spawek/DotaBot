@@ -127,7 +127,11 @@ public class Program
 			string content = msg.Content;
 			Command command = Parse(content, time);
 			if (command == null)
+			{
 				return Task.CompletedTask;
+			}
+
+			command.channel = msg.Channel.Name;
 
 			Log($"Recognized command: {command} ({author}: \"{content}\")");
 

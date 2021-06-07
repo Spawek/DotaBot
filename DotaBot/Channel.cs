@@ -68,6 +68,24 @@ namespace DotaBot
 			return as_player;
 		}
 
+		static private string GetGameName(string channelName)
+        {
+			string channelNameLowered = channelName?.ToLower();
+			switch (channelNameLowered)
+			{
+				case "homm3":
+					return "Herosik";
+				case "cs-go":
+					return "Ce-esik";
+				case "factorio":
+				case "valheim":
+				case "among-us":
+					return channelNameLowered.First().ToString().ToUpper() + channelNameLowered.Substring(1); //Just uppercase first letter
+				default:
+					return "Dotka"; //default, cause sometimes we invite via #general
+			}
+        }
+
 		private void ExecuteInner(Command command, string requester)
 		{
 			var player = new Player { 
@@ -89,7 +107,7 @@ namespace DotaBot
 						Time = command.time
 					};
 					db.DotaBotGames.Add(new_game);
-					SendMessage($"Będzie Dotka!\n{PrintGame(new_game)}");
+					SendMessage($"Będzie {GetGameName(command.channel)}!\n{PrintGame(new_game)}");
 				}
 				else
 				{
@@ -125,12 +143,12 @@ namespace DotaBot
 						db.Entry(game).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 						if (game.Players.Count == 0)
 						{
-							SendMessage($"Brak chętnych na Dotkę o {game.Time.Hour}:{game.Time.Minute:D2} :(");
+							SendMessage($"Brak chętnych na grę {GetGameName(command.channel)} o {game.Time.Hour}:{game.Time.Minute:D2} :(");
 							db.DotaBotGames.Remove(game);
 						}
 						else
 						{
-							SendMessage($"{player.Name} zrezygnował z gry\n{PrintGame(game)}");
+							SendMessage($"{player.Name} zrezygnował z gry {GetGameName(command.channel)}\n{PrintGame(game)}");
 						}
 					}
 				}

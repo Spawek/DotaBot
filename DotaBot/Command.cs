@@ -15,6 +15,7 @@ namespace DotaBot
 		public string as_player;  // used by: Add, Remove
 		public string note;  // used by: Add, AddLatest
 		public Action action;
+		public string channel;
 
 		public override string ToString()
 		{
@@ -36,9 +37,15 @@ namespace DotaBot
 				note_string = $" (note : {note})";
 			}
 
+			string channel = "";
+			if(channel != null)
+            {
+				channel = $" (channel: ${channel})";
+            }
+
 			string action_string = $"action: {action}";
 
-			return $"({time_string}{action_string}){as_player_string}{note_string}";
+			return $"({time_string}{action_string}){as_player_string}{channel}{note_string}";
 		}
 
 		public override bool Equals(object obj)
